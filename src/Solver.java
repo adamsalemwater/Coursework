@@ -8,6 +8,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 
 public class Solver {
@@ -164,10 +166,10 @@ public class Solver {
         for (int i=0; i<clauseDatabase.length; i++) {
             int onlyUnassigned = findUnit(assignment, clauseDatabase[i]);
             if (onlyUnassigned != 0) {
-                // If there's a unit clause, set its variable and continue recursively
-                int[] newAssignment = Arrays.copyOf(assignment, assignment.length);
-                newAssignment[Math.abs(onlyUnassigned)] = onlyUnassigned / Math.abs(onlyUnassigned);
-                return recursion(clauseDatabase, newAssignment);
+                // If there's a unit clause, set its last literal to a true value and also remove the clause from the database as it has now already been assigned
+                int[] copyAssignment = Arrays.copyOf(assignment, assignment.length);
+                copyAssignment[Math.abs(onlyUnassigned)] = onlyUnassigned / Math.abs(onlyUnassigned);
+                return recursion(clauseDatabase, copyAssignment);
 
             }
 
@@ -183,16 +185,16 @@ public class Solver {
         // Otherwise, try all possible values for the first unknown variable
         for (int i = 1; i <= assignment.length; i++) {
             if (emptyAssignment(assignment) != 0 && unassignedLiteral(i, assignment)) {
-                int[] trueAssignment = Arrays.copyOf(assignment, assignment.length);
-                trueAssignment[i] = 1;
-                int[] result = recursion(clauseDatabase, trueAssignment);
+                int[] positiveAss = Arrays.copyOf(assignment, assignment.length);
+                positiveAss[i] = 1;
+                int[] result = recursion(clauseDatabase, positiveAss);
                 if (result != null) {
                     return result;
                 }
 
-                int[] falseAssignment = Arrays.copyOf(assignment, assignment.length);
-                falseAssignment[i] = -1;
-                result = recursion(clauseDatabase, falseAssignment);
+                int[] negativeAss = Arrays.copyOf(assignment, assignment.length);
+                negativeAss[i] = -1;
+                result = recursion(clauseDatabase, negativeAss);
                 if (result != null) {
                     return result;
                 }
@@ -202,7 +204,7 @@ public class Solver {
             }
         }
 
-        // If all variables are assigned, but some clauses are unsatisfied, backtrack
+        // check if the assignments have been assigned but it still outputs a unsatisfiable clause, backtrack
         return null;
     }
 
@@ -217,6 +219,15 @@ public class Solver {
             }
         }
         return 0;
+    }
+
+    public boolean literalsAssignedInClause(int[] clause, int[] assignment) {
+        for (int literal : clause) {
+            if (assignment[Math.abs(literal)] == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
 
