@@ -12,10 +12,7 @@ import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Stack;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -148,6 +145,13 @@ public class Solver {
 
     public int[] recursion(int[][] clauseDatabase, int[] assignment) {
 
+        HashMap<Integer, Integer> literalCount = new HashMap<>();
+
+        for (int i=1; i<assignment.length; i++) {
+            int count_i = 0;
+            literalCount.put(i, count_i);
+        }
+
         // checking if there are any unassigned assignments even if the database is satisfied
         if (checkClauseDatabase(assignment, clauseDatabase) && emptyAssignment(assignment) != 0) {
             int literal = emptyAssignment(assignment);
@@ -162,6 +166,7 @@ public class Solver {
             return assignment;
         }
 
+
         // Now checking for any unit clauses
         for (int i=0; i<clauseDatabase.length; i++) {
             int onlyUnassigned = findUnit(assignment, clauseDatabase[i]);
@@ -169,6 +174,11 @@ public class Solver {
                 // If there's a unit clause, set its last literal to a true value and also remove the clause from the database as it has now already been assigned
                 int[] copyAssignment = Arrays.copyOf(assignment, assignment.length);
                 copyAssignment[Math.abs(onlyUnassigned)] = onlyUnassigned / Math.abs(onlyUnassigned);
+                literalCount.put(Math.abs(onlyUnassigned), literalCount.get(Math.abs(onlyUnassigned) + 1));
+                for (Map.Entry<Integer, Integer> entry : literalCount.entrySet()) {
+                    System.out.println("assignment" + entry.getKey());
+                    System.out.println("count" + entry.getValue());
+                }
                 return recursion(clauseDatabase, copyAssignment);
 
             }
@@ -207,7 +217,6 @@ public class Solver {
         // check if the assignments have been assigned but it still outputs a unsatisfiable clause, backtrack
         return null;
     }
-
 
 
 
